@@ -79,3 +79,22 @@ def test_a_rename_is_checked_with_both_paths():
 def test_a_detached_signature_of_a_manifest_is_not_a_code_change():
     assert _is_dirty(f"?? a.sciproof.json.sig{NUL}") is False
     assert _is_dirty(f"?? a.sciproof.json.sig{NUL}?? other.txt{NUL}") is True
+
+
+
+def test_git_info_outside_a_repository_returns_none(tmp_path):
+    assert git_info(tmp_path) is None
+
+
+def test_git_info_when_git_is_missing_returns_none(tmp_path, monkeypatch):
+    def missing_git(*args, **kwargs):
+        raise FileNotFoundError("git executable not found")
+
+    monkeypatch.setattr(subprocess, "run", missing_git)
+    assert git_info(tmp_path) is None
+
+
+@needs_git
+def test_detached_head_is_reported_as_head(repo):
+    _git(repo, "checkout", "--detach", "HEAD")
+    assert git_info(repo)["branch"] == "HEAD"
