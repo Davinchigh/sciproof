@@ -10,7 +10,7 @@ import pytest
 
 from sciproof import cli
 from sciproof.errors import UsageError
-from sciproof.markdown import escape, number, report_markdown
+from sciproof.markdown import _numeric_tables, escape, number, report_markdown
 from sciproof.numeric import Difference, compare, compare_detailed, load_numeric
 from sciproof.verify import Report, Status, report_to_dict, verify
 
@@ -269,3 +269,28 @@ def test_cli_json_flag_is_still_an_alias_and_conflicts_are_refused(project, caps
     assert "conflicts" in capsys.readouterr().err
     with pytest.raises(UsageError):
         cli._report_format(type("A", (), {"json": True, "format": "markdown"})())
+
+
+
+def test_numeric_tables_render_summary_difference_rows():
+    report = Report(name="exp", rerun_requested=False)
+    report.add(
+        Status.FAIL,
+        "rerun output",
+        "numeric differences found",
+        {
+            "kind": "rerun_output_numeric",
+            "path": "out/result.json",
+            "difference_details": [
+                {"kind": "summary", "message": "10 differences omitted"},
+            ],
+        },
+    )
+
+    (section,) = ["\n".join(_numeric_tables(report))]
+    assert "| 10 differences omitted | | | | | |" in section
+
+
+def test_number_escapes_unexpected_values_without_raising():
+    value = ["custom"]
+    assert number(value) == escape(value, 60)
