@@ -397,4 +397,4 @@ def test_nested_output_directory_and_file_are_rejected(project):
             numeric_outputs=[],
         )
     assert not (project.root / "nested-outputs.sciproof.json").exists()
-    assert project.runs() == 1
+    assert (project.root / "data" / "result.csv").exists()
